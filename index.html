@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>對稱農場大作戰｜五年級線對稱遊戲</title>
+<style>
+:root{
+  --wood:#8b5a2b; --wood-d:#6b421e; --paper:#fffbe8; --green:#58a05c;
+  --green-d:#3d7a40; --sky:#bfe8ff; --red:#e74c3c; --gold:#f5b301;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+body{
+  margin:0; font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+  background: linear-gradient(#87ceeb 0 32%, #9be15d 32% 100%);
+  min-height:100vh; color:#333;
+}
+header{
+  background:linear-gradient(#7ac74f,#58a05c); color:white; padding:10px 16px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  border-bottom:4px solid var(--wood); position:sticky; top:0; z-index:20;
+}
+header h1{margin:0; font-size:22px; text-shadow:1px 2px 0 rgba(0,0,0,.2);}
+.hud{display:flex; gap:10px; margin-left:auto; flex-wrap:wrap;}
+.pill{background:var(--paper); color:#5a3d1b; border:3px solid var(--wood);
+  border-radius:999px; padding:4px 14px; font-weight:900; font-size:16px;}
+#farmShelf{background:var(--paper); border-bottom:4px solid var(--wood);
+  padding:8px 12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:14px;}
+.slot{width:52px;height:52px; border:3px dashed #c9a86a; border-radius:12px;
+  display:flex; align-items:center; justify-content:center; font-size:30px; background:white;}
+.slot.got{border-style:solid; background:#fff6c9; animation:pop .5s;}
+@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+main{max-width:1100px; margin:0 auto; padding:14px; display:grid; grid-template-columns: 300px 1fr; gap:14px;}
+@media(max-width:860px){main{grid-template-columns:1fr;}}
+.card{background:var(--paper); border:4px solid var(--wood); border-radius:18px; padding:14px; box-shadow:0 6px 0 rgba(0,0,0,.15);}
+.card h2{margin:0 0 8px; font-size:18px; color:var(--wood-d);}
+#mascot{background:#fff; border:3px solid #c9a86a; border-radius:14px; padding:10px; display:flex; gap:10px; align-items:flex-start;}
+#mascot .cow{font-size:44px;}
+#mascotText{font-size:15px; line-height:1.6;}
+#levelList{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
+.lvlBtn{border:3px solid var(--wood); border-radius:12px; padding:8px 6px; background:white;
+  cursor:pointer; font-weight:900; font-size:14px;}
+.lvlBtn small{display:block; font-weight:600; color:#777;}
+.lvlBtn.active{background:#ffe28a;}
+.lvlBtn.locked{opacity:.45; filter:grayscale(1);}
+.lvlBtn.done{background:#d6f5c8;}
+#boardWrap{display:flex; flex-direction:column; align-items:center;}
+#mission{width:100%; background:#eaf7ff; border:3px solid #5aa9d6; border-radius:12px; padding:8px 12px; margin-bottom:10px; font-size:15px;}
+#axisLabel{display:inline-block; background:var(--red); color:white; border-radius:999px; padding:2px 10px; font-weight:900; margin-left:6px;}
+#board{display:grid; gap:3px; background:#6b421e; padding:8px; border-radius:14px; border:4px solid #4e2e14;
+  touch-action:none; user-select:none; max-width:min(92vw,520px); width:100%;}
+.cell{aspect-ratio:1/1; background:#f7f0d2; border-radius:6px; display:flex; align-items:center; justify-content:center;
+  font-size:clamp(12px,3vw,22px); cursor:pointer; position:relative;}
+.cell.given{background:#8fd18f; font-weight:900;}
+.cell.player{background:#ffb84d;}
+.cell.axis{background-image:linear-gradient(rgba(231,76,60,.55),rgba(231,76,60,.55)); border:2px solid var(--red);}
+.cell.given.axis{background:#7ec87e; border:2px solid var(--red);}
+.cell.player.axis{background:#f0a030; border:2px solid var(--red);}
+.cell.ghost{outline:4px dashed #3498db; outline-offset:-4px; animation:blink 1s infinite;}
+.cell.bad{animation:shake .4s; background:#ff7b7b !important;}
+.cell.miss{animation:blink .7s infinite; background:#fff !important; outline:4px dashed var(--red); outline-offset:-4px;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px) rotate(-3deg)}75%{transform:translateX(6px) rotate(3deg)}}
+@keyframes blink{50%{opacity:.35}}
+#toolbar{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:12px;}
+button.big{border:3px solid var(--wood-d); border-radius:14px; padding:10px 16px; font-size:16px; font-weight:900; cursor:pointer;}
+#checkBtn{background:linear-gradient(#ffd93d,#f5b301); }
+#hintBtn{background:#bfe8ff;}
+#clearBtn{background:#ffc9c9;}
+#modeBtn{background:white;}
+#tips{margin-top:10px; font-size:14px; background:#fff6c9; border:2px dashed var(--wood); border-radius:12px; padding:8px 10px; width:100%;}
+.confetti{position:fixed; font-size:26px; pointer-events:none; animation:fall 1.6s linear forwards; z-index:99;}
+@keyframes fall{to{transform:translateY(100vh) rotate(720deg); opacity:0;}}
+#overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px;}
+#overlayBox{background:var(--paper); border:5px solid var(--wood); border-radius:20px; max-width:560px; width:100%; padding:20px; text-align:center;}
+#overlayBox h2{color:var(--wood-d);}
+.teacher{font-size:13px; color:#555; margin-top:10px;}
+.shakeBoard{animation:shake .5s;}
+.successBoard{animation:pop .6s;}
+.stars{font-size:34px; letter-spacing:4px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚜 對稱農場大作戰</h1>
+  <div class="hud">
+    <div class="pill">🪙 金幣 <span id="coins">20</span></div>
+    <div class="pill">⭐ 星星 <span id="stars">0</span></div>
+    <div class="pill">⏱️ <span id="timer">--</span></div>
+    <div class="pill">🏆 第 <span id="lvlNow">1</span> 關 / 9</div>
+  </div>
+</header>
+
+<div id="farmShelf">
+  <b>🚜 我的農場：</b>
+  <div id="slots"></div>
+  <span id="shelfText" style="color:#6b421e;font-weight:700;">蓋出線對稱建築，農場才會升級！不對稱會倒塌喔！</span>
+</div>
+
+<main>
+  <section class="card">
+    <h2>🐄 哞哞博士</h2>
+    <div id="mascot"><div class="cow">🐄</div><div id="mascotText">嗨！我是哞哞博士！點格子把建築的另一半補起來，讓它線對稱，農場就能升級！</div></div>
+    <h2 style="margin-top:12px;">🗺️ 關卡地圖</h2>
+    <div id="levelList"></div>
+    <div class="teacher">
+      <details>
+        <summary><b>👩‍🏫 老師專區（學習目標）</b></summary>
+        <p>對應五年級「線對稱圖形」：認識對稱軸、找出對稱點、繪製線對稱圖形。核心概念：對稱點到對稱軸距離相等、連線與軸垂直。<br>
+        玩法：左側/上側已給一半，學生需在方格紙上補出另一半。支援鉛直軸、水平軸、斜軸。建議搭配問句：「你數了幾格？」「鏡子裡應該長怎樣？」</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="card" id="boardWrap">
+    <div id="mission">任務載入中…<span id="axisLabel"></span></div>
+    <div id="board"></div>
+    <div id="toolbar">
+      <button class="big" id="checkBtn">🏗️ 蓋起來！檢查</button>
+      <button class="big" id="hintBtn">💡 提示 (-5🪙)</button>
+      <button class="big" id="modeBtn">🧱 模式：種田 🌱</button>
+      <button class="big" id="clearBtn">🧹 清掉我的</button>
+    </div>
+    <div id="tips">🖱️ <b>操作：</b>點格子種田 / 拖曳連種，點已有格可剷除。紅線就是<b>對稱軸</b>！祕訣：數一數每一格到紅線有幾格，另一邊要一樣遠！</div>
+  </section>
+</main>
+
+<div id="overlay"><div id="overlayBox">
+  <h2>🚜 對稱農場大作戰！</h2>
+  <p style="text-align:left;line-height:1.8;">哞～農場被大風吹壞一半了！<br>
+  👉 <b>紅線是對稱軸</b>，綠色是留下的一半。<br>
+  👉 點黃格把<b>另一半補成線對稱</b>，按「蓋起來」就能升級農場！<br>
+  👉 蓋錯會<b>倒塌</b>，要重蓋。先數格子再下手！<br>
+  💰 金幣可買提示，⭐ 集滿 18 顆就是<b>對稱大師</b>！</p>
+  <button class="big" id="startBtn" style="background:linear-gradient(#ffd93d,#f5b301);">🌱 開工！</button>
+</div></div>
+
+<script>
+const N_CENTER = m => (m-1)/2;
+const LEVELS = [
+ {name:"菜苗發芽", build:"🌱", axis:"vertical", size:7, tip:"鉛直對稱軸（直直的鏡子）。左邊種什麼，右邊就要在鏡子位置種一樣的！",
+  art:["...#...","..###..","..###..","...#...","..###..",".#####.","...#..."]},
+ {name:"小屋地基", build:"🏠", axis:"vertical", size:9, tip:"還是鉛直軸，但房子變大了！屋頂尖尖要在正中間的軸上。",
+  art:["....#....","...###...","..#####..",".#######.","#########","###...###","###...###","###...###","#########"]},
+ {name:"池塘倒影", build:"🐟", axis:"horizontal", size:9, tip:"水平對稱軸（橫橫的鏡子）！上面有什麼，下面就要倒影一樣的！",
+  art:[".........","..#####..",".#######.","#########","#########","#########",".#######.","..#####..","........."]},
+ {name:"紅蘿蔔田", build:"🥕", axis:"horizontal", size:9, tip:"水平軸！數數看：離紅線 1 格、2 格、3 格……上下要一樣！",
+  art:[".........","....#....","....#....","..#####..",".#######.","..#####..","....#....","....#....","........."]},
+ {name:"斜坡花圃", build:"🌷", axis:"diag-main", size:9, random:14, tip:"斜對稱軸（左上↘右下）！像摺紙沿斜線對摺，(r,c) 和 (c,r) 要一樣！"},
+ {name:"果樹斜影", build:"🍎", axis:"diag-anti", size:9, random:16, tip:"另一條斜軸（右上↙左下）！把紙沿斜線摺起來，兩邊要完全疊合！"},
+ {name:"風車小屋", build:"🏡", axis:"vertical", size:11, tip:"大魔王：鉛直軸 11×11！慢慢數，一排一排對，別急！",
+  art:[".....#.....","....###....","...#####...","..#######..",".#########.","###########","##.......##","##..###..##","##..###..##","##..###..##","###########"]},
+ {name:"大穀倉", build:"🚜", axis:"horizontal", size:11, tip:"大魔王：水平軸！上下倒影要一樣，屋頂在正中間！",
+  art:["...........",".....#.....","....###....","..#######..",".#########.","###########",".#########.","..#######..","....###....",".....#.....","..........."]},
+ {name:"大師農場", build:"👑", axis:"vertical", size:9, free:true, tip:"終極挑戰：空地自由發揮！種至少 12 格，且整張圖要線對稱，才能拿到皇冠！"},
+];
+
+let state = { lvl:0, coins:20, stars:0, unlocked:0, shelf:[], player:new Set(), attempts:0, hints:0,
+  startT:Date.now(), mode:"plant", timerInt:null, timeLeft:120 };
+
+const $ = id => document.getElementById(id);
+const key = (r,c)=> r+","+c;
+
+function mirrorPos(r,c,axis,N){
+  if(axis==="vertical") return [r, N-1-c];
+  if(axis==="horizontal") return [N-1-r, c];
+  if(axis==="diag-main") return [c, r];
+  if(axis==="diag-anti") return [N-1-c, N-1-r];
+}
+function onAxis(r,c,axis,N){
+  if(axis==="vertical") return c===N_CENTER(N);
+  if(axis==="horizontal") return r===N_CENTER(N);
+  if(axis==="diag-main") return r===c;
+  if(axis==="diag-anti") return r+c===N-1;
+}
+function sideOf(r,c,axis,N){ // 0 = given side (+axis), 1 = solution side
+  if(axis==="vertical") return c > N_CENTER(N) ? 1 : 0;
+  if(axis==="horizontal") return r > N_CENTER(N) ? 1 : 0;
+  if(axis==="diag-main") return r > c ? 1 : 0;
+  if(axis==="diag-anti") return (r+c) > (N-1) ? 1 : 0;
+}
+// seeded random for diagonal levels
+function seededRand(seed){ let s=seed; return ()=>{ s=(s*9301+49297)%233280; return s/233280; }; }
+
+function buildPuzzle(idx){
+  const L = LEVELS[idx], N = L.size;
+  let full = new Set();
+  if(L.art){
+    L.art.forEach((row,r)=>{ [...row].forEach((ch,c)=>{ if(ch==="#") full.add(key(r,c)); }); });
+  } else if(L.random){
+    const rnd = seededRand(idx*1000+7);
+    const want = L.random;
+    let guard=0;
+    while(full.size < want*2 && guard++<2000){
+      let r=Math.floor(rnd()*N), c=Math.floor(rnd()*N);
+      if(onAxis(r,c,L.axis,N)) continue;
+      if(sideOf(r,c,L.axis,N)!==0) continue;
+      const [mr,mc]=mirrorPos(r,c,L.axis,N);
+      full.add(key(r,c)); full.add(key(mr,mc));
+    }
+    // add a couple axis cells for beauty
+    for(let i=1;i<N-1;i++){
+      let cell = L.axis==="vertical"? key(i,N_CENTER(N)) : L.axis==="horizontal"? key(N_CENTER(N),i)
+        : L.axis==="diag-main"? key(i,i) : key(i,N-1-i);
+      full.add(cell); if(full.size>want*2+6) break;
+    }
+  } else if(L.free){ full = new Set(); }
+  const given=new Set(), sol=new Set();
+  full.forEach(k=>{
+    const [r,c]=k.split(",").map(Number);
+    if(onAxis(r,c,L.axis,N) || sideOf(r,c,L.axis,N)===0) given.add(k);
+    else sol.add(k);
+  });
+  return {given, sol, N};
+}
+let puzzle=null;
+
+function speak(t){ $("mascotText").innerHTML=t; }
+function beep(f=440,d=.12,type="square"){ try{
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=type; o.frequency.value=f; g.gain.value=.15;
+  o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+d);
+}catch(e){} }
+function fanfare(ok){ if(ok){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.15),i*120));}
+  else{[200,150].forEach((f,i)=>setTimeout(()=>beep(f,.2,"sawtooth"),i*150));} }
+
+function renderLevels(){
+  const w=$("levelList"); w.innerHTML="";
+  LEVELS.forEach((L,i)=>{
+    const b=document.createElement("button");
+    const isLocked = i>state.unlocked;
+    b.className="lvlBtn"+(i===state.lvl?" active":"")+(isLocked?" locked":"")+(state.shelf[i]?" done":"");
+    b.innerHTML=`${L.build} 第${i+1}關<br><small>${L.name}</small>`;
+    b.onclick=()=>{ if(i<=state.unlocked){ loadLevel(i);} else speak(`🔒 第 ${i+1} 關還沒解鎖，先蓋好第 ${state.unlocked+1} 關吧！`); };
+    w.appendChild(b);
+  });
+  const s=$("slots"); s.innerHTML="";
+  LEVELS.forEach((L,i)=>{ const d=document.createElement("div");
+    d.className="slot"+(state.shelf[i]?" got":""); d.textContent=state.shelf[i]||"❔"; d.title=`第${i+1}關：${L.name}`; s.appendChild(d); });
+  $("coins").textContent=state.coins; $("stars").textContent=state.stars; $("lvlNow").textContent=state.lvl+1;
+}
+
+function loadLevel(i){
+  state.lvl=i; state.player=new Set(); state.attempts=0; state.hints=0;
+  state.startT=Date.now(); state.timeLeft = LEVELS[i].size>=11?180:120;
+  puzzle=buildPuzzle(i);
+  const L=LEVELS[i];
+  const axisName={vertical:"鉛直對稱軸 ‖",horizontal:"水平對稱軸 ＝","diag-main":"斜軸 ↘","diag-anti":"斜軸 ↙"}[L.axis];
+  $("mission").innerHTML=`<b>任務 ${i+1}：${L.build} ${L.name}</b> — 綠色是留下一半，請補出另一半！<span id="axisLabel">${axisName}</span><br><small>💡 ${L.tip}</small>`;
+  speak(`第 ${i+1} 關「${L.name}」開工！${L.tip} ${L.free?"這關是自由創作，整張圖自己種，但一定要線對稱喔！":"綠色不用動，把缺少的另一半種出來！"}`);
+  clearInterval(state.timerInt);
+  state.timerInt=setInterval(()=>{
+    state.timeLeft--;
+    const m=Math.floor(Math.max(0,state.timeLeft)/60), s=Math.max(0,state.timeLeft)%60;
+    $("timer").textContent=`${m}:${String(s).padStart(2,"0")}`;
+    if(state.timeLeft<=20) $("timer").style.color="red";
+    else $("timer").style.color="inherit";
+  },1000);
+  drawBoard(); renderLevels();
+}
+
+function drawBoard(ghost=false, marks=null){
+  const L=LEVELS[state.lvl], N=L.size, b=$("board");
+  b.style.gridTemplateColumns=`repeat(${N},1fr)`; b.innerHTML="";
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    const k=key(r,c), d=document.createElement("div");
+    d.className="cell"; d.dataset.r=r; d.dataset.c=c;
+    const isAx=onAxis(r,c,L.axis,N);
+    if(isAx) d.classList.add("axis");
+    if(puzzle.given.has(k)){ d.classList.add("given"); d.textContent = L.build===""?"": (isAx?"✦":"🌱"); }
+    if(state.player.has(k)){ d.classList.add("player"); d.textContent="🌾"; }
+    if(ghost && puzzle.sol && puzzle.sol.has(k) && !state.player.has(k)){ d.classList.add("ghost"); d.textContent="👻"; }
+    if(marks){
+      if(marks.bad.has(k)) d.classList.add("bad");
+      if(marks.miss.has(k)) d.classList.add("miss");
+    }
+    // distance helper on hover title
+    let dist = L.axis==="vertical"? Math.abs(c-N_CENTER(N)) : L.axis==="horizontal"? Math.abs(r-N_CENTER(N))
+      : L.axis==="diag-main"? Math.abs(r-c) : Math.abs(r+c-(N-1));
+    d.title=`(${r},${c}) 距軸約 ${dist} 格`;
+    b.appendChild(d);
+  }
+  // paint interactions (click + drag)
+  let dragging=false, paintVal=true;
+  b.onpointerdown=e=>{
+    const cell=e.target.closest(".cell"); if(!cell) return;
+    e.preventDefault();
+    const r=+cell.dataset.r, c=+cell.dataset.c, k=key(r,c);
+    if(puzzle.given.has(k)){ beep(200,.08); speak("那格已經蓋好了，不用動！補空白的那一半就好。"); return; }
+    paintVal = state.mode==="erase" ? false : !state.player.has(k);
+    if(state.mode==="erase") paintVal=false;
+    applyPaint(r,c,paintVal);
+    dragging=true; b.setPointerCapture(e.pointerId);
+  };
+  b.onpointerover=e=>{
+    if(!dragging) return;
+    const cell=e.target.closest(".cell"); if(!cell) return;
+    applyPaint(+cell.dataset.r,+cell.dataset.c,paintVal);
+  };
+  b.onpointerup=()=>dragging=false;
+}
+function applyPaint(r,c,val){
+  const k=key(r,c);
+  if(puzzle.given.has(k)) return;
+  if(val) { if(!state.player.has(k)){ state.player.add(k); beep(600,.06);} }
+  else { if(state.player.delete(k)) beep(350,.06); }
+  drawBoard();
+}
+
+function symmetricOK(cellSet, axis, N){
+  for(const k of cellSet){
+    const [r,c]=k.split(",").map(Number);
+    const [mr,mc]=mirrorPos(r,c,axis,N);
+    if(!cellSet.has(key(mr,mc))) return false;
+  }
+  return true;
+}
+
+function checkAnswer(){
+  const L=LEVELS[state.lvl], N=L.size;
+  state.attempts++;
+  if(L.free){
+    const all=new Set([...state.player]);
+    if(all.size<12){ fanfare(false); speak(`還不夠大！已經種了 ${all.size} 格，至少要 12 格才算農場喔，加油！`); return; }
+    if(symmetricOK(all,L.axis,N)){ success(); }
+    else{ fanfare(false); $("board").classList.add("shakeBoard"); setTimeout(()=>$("board").classList.remove("shakeBoard"),600);
+      speak("哎呀倒塌了！⚠️ 整張圖還不是線對稱。祕訣：點一格，就要在鏡子位置再點一格，兩邊格數一樣！"); }
+    return;
+  }
+  const bad=new Set([...state.player].filter(k=>!puzzle.sol.has(k)));
+  const miss=new Set([...puzzle.sol].filter(k=>!state.player.has(k)));
+  if(bad.size===0 && miss.size===0){ success(); }
+  else{
+    fanfare(false);
+    drawBoard(false,{bad,miss});
+    $("board").classList.add("shakeBoard"); setTimeout(()=>$("board").classList.remove("shakeBoard"),600);
+    let msg=`💥 建築搖晃了！`;
+    if(miss.size>0 && bad.size>0) msg+=`少了 ${miss.size} 格、放錯了 ${bad.size} 格。紅框閃的是放錯的，虛線是漏掉的！`;
+    else if(miss.size>0) msg+=`還少 ${miss.size} 格（白底紅框閃爍處）。數數看距離軸幾格！`;
+    else msg+=`多放了 ${bad.size} 格（紅色處），用「剷除模式」鏟掉吧！`;
+    if(state.attempts>=2) msg+=`<br>🧭 小祕訣：每個綠格 🌱 的鏡子位置都該有黃格 🌾，軸上的 ✦ 不用補。`;
+    speak(msg);
+  }
+}
+
+function success(){
+  fanfare(true);
+  const L=LEVELS[state.lvl];
+  const secs=Math.floor((Date.now()-state.startT)/1000);
+  const fast = secs<60?10: secs<120?6:2;
+  const accBonus = state.attempts===1?6: state.attempts===2?3:0;
+  const hintCost = state.hints*5;
+  const gain=Math.max(8, 20+fast+accBonus-hintCost);
+  state.coins+=gain;
+  const star = (state.attempts===1&&state.hints===0)?3:(state.attempts<=2&&state.hints<=1)?2:1;
+  const isNew=!state.shelf[state.lvl];
+  state.shelf[state.lvl]=L.build;
+  // total stars: recompute max? simple accumulate only first time
+  if(isNew) state.stars+=star;
+  state.unlocked=Math.max(state.unlocked, Math.min(LEVELS.length-1, state.lvl+1));
+  $("board").classList.add("successBoard"); setTimeout(()=>$("board").classList.remove("successBoard"),700);
+  confetti();
+  renderLevels();
+  const total=LEVELS.length, last = state.lvl===total-1;
+  speak(`🎉 <b>升級成功！</b>「${L.name}」蓋好了！+${gain}🪙、+${isNew?star:0}⭐（${secs}秒、試 ${state.attempts} 次）<br>${last?"你是對稱大師了！👑":"下一關更刺激，快去看看！"}`);
+  // auto-advance prompt
+  setTimeout(()=>{ if(state.lvl<LEVELS.length-1 && confirm(`🎉 第${state.lvl+1}關完成！要前往第${state.lvl+2}關「${LEVELS[state.lvl+1].name}」嗎？`)) loadLevel(state.lvl+1); }, 600);
+}
+function confetti(){
+  const em=["🌾","🌟","🎉","🌷","🪙"];
+  for(let i=0;i<24;i++){ const s=document.createElement("div"); s.className="confetti";
+    s.textContent=em[Math.floor(Math.random()*em.length)];
+    s.style.left=Math.random()*100+"vw"; s.style.top="-30px"; s.style.animationDelay=(Math.random()*.5)+"s";
+    document.body.appendChild(s); setTimeout(()=>s.remove(),2200); }
+}
+
+$("checkBtn").onclick=checkAnswer;
+$("clearBtn").onclick=()=>{ state.player.clear(); drawBoard(); beep(300,.08); speak("好，清空你種的部分，綠色地基還在，重新數格子再種一次吧！"); };
+$("modeBtn").onclick=e=>{ state.mode = state.mode==="plant"?"erase":"plant";
+  e.target.textContent = state.mode==="plant"?"🧱 模式：種田 🌱":"🧱 模式：剷除 🥄"; };
+$("hintBtn").onclick=()=>{
+  if(state.coins<5){ speak("🪙 金幣不夠！先蓋好這一關賺金幣吧。試著數格子，不用提示也行！"); beep(180,.2); return; }
+  const L=LEVELS[state.lvl];
+  if(L.free){ speak("大師關卡不給直接看答案！提示：先在左邊種一個小圖形，再到右邊鏡子位置種一樣的。"); return; }
+  state.coins-=5; state.hints++; renderLevels();
+  drawBoard(true); beep(880,.15);
+  speak("👻 半透明鬼影就是答案的位置，記起來！3 秒後消失。學會方法：每格到紅線幾格，另一邊就要幾格！");
+  setTimeout(()=>drawBoard(),3000);
+};
+$("startBtn").onclick=()=>{ $("overlay").style.display="none"; loadLevel(0); };
+
+renderLevels();
+puzzle=buildPuzzle(0);
+drawBoard();
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👩‍🏫 教師後台｜錯題紀錄查詢</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+  background:linear-gradient(180deg,#d8f7ff,#fff6d9);min-height:100vh;color:#4a3728;}
+header{background:linear-gradient(#7ac74f,#58a05c);color:#fff;padding:14px 18px;text-align:center;
+  border-bottom:4px solid #6b421e;}
+header h1{margin:0;font-size:24px;}
+header a{color:#fff;}
+main{max-width:1000px;margin:0 auto;padding:14px;}
+.panel{background:#fffdf4;border:4px solid #f0a35e;border-radius:20px;padding:16px;margin-top:12px;
+  box-shadow:0 6px 0 rgba(240,163,94,.3);}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
+.fld{display:flex;flex-direction:column;gap:4px;font-weight:900;font-size:14px;}
+.fld input{padding:9px;border-radius:10px;border:2px solid #c9a86a;font-size:15px;}
+button.big{border:3px solid #2e7d32;border-radius:12px;padding:10px 20px;font-size:16px;font-weight:900;
+  background:linear-gradient(#8be060,#58a05c);color:#fff;cursor:pointer;}
+button.ghost{background:#fff;color:#2e7d32;}
+#summary{font-weight:900;margin:10px 0;color:#d35400;}
+table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:12px;overflow:hidden;}
+th,td{border:1px solid #e0cfa8;padding:7px 8px;text-align:center;}
+th{background:#ffe28a;}
+tr.err{background:#ffe3e3;}
+tr.okrow{background:#e9f9e2;}
+.chk{display:flex;align-items:center;gap:6px;font-weight:900;}
+#msg{color:#888;font-size:14px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>👩‍🏫 教師後台｜對稱農場錯題紀錄</h1>
+  <div><a href="../">← 回遊戲樂園首頁</a></div>
+</header>
+<main>
+  <section class="panel">
+    <div class="filters">
+      <label class="fld">班級
+        <input id="fClass" list="classList" placeholder="例：501（留白=全部）">
+        <datalist id="classList"></datalist>
+      </label>
+      <label class="fld">姓名
+        <input id="fName" placeholder="可只打一個字（留白=全部）">
+      </label>
+      <label class="fld">日期（起）
+        <input id="fFrom" type="date">
+      </label>
+      <label class="fld">日期（訖）
+        <input id="fTo" type="date">
+      </label>
+      <label class="chk"><input id="fErr" type="checkbox" checked style="width:20px;height:20px;"> 只看有錯的</label>
+      <button class="big" id="qBtn">🔍 查詢</button>
+      <button class="big ghost" id="csvBtn">⬇️ 匯出 CSV</button>
+    </div>
+    <div id="msg">連線中…</div>
+    <div id="summary"></div>
+  </section>
+  <section class="panel">
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>班級</th><th>座號</th><th>姓名</th><th>關卡</th><th>嘗試</th><th>提示</th>
+        <th>缺幾格</th><th>多放幾格</th><th>秒數</th><th>成功</th><th>時間</th>
+      </tr></thead>
+      <tbody id="rows"><tr><td colspan="11">尚無資料</td></tr></tbody>
+    </table>
+    </div>
+  </section>
+</main>
+<script>
+const SB_URL="https://strurjdilhhydmspicfi.supabase.co";
+const SB_KEY="sb_publishable_lHEXlOKLO9KQM4ZnX-Uq3Q_6H1GuYUs";
+let token=null, cache=[];
+async function ensure(){
+  const r=await fetch(SB_URL+"/auth/v1/signup",{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({data:{}})});
+  const j=await r.json(); token=j.access_token;
+}
+function H(){ return {apikey:SB_KEY,Authorization:"Bearer "+token,"Content-Type":"application/json"}; }
+function fmt(t){ if(!t) return ""; const d=new Date(t); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
+async function query(){
+  const box=document.getElementById("rows");
+  document.getElementById("msg").textContent="查詢中…";
+  try{
+    if(!token) await ensure();
+    const body={
+      p_class: document.getElementById("fClass").value.trim()||null,
+      p_name: document.getElementById("fName").value.trim()||null,
+      p_from: document.getElementById("fFrom").value||null,
+      p_to: document.getElementById("fTo").value||null
+    };
+    const r=await fetch(SB_URL+"/rest/v1/rpc/get_error_report",{method:"POST",headers:H(),body:JSON.stringify(body)});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    cache=await r.json();
+    // 班級 datalist
+    const cls=[...new Set(cache.map(x=>x.class_name).filter(Boolean))].sort();
+    document.getElementById("classList").innerHTML=cls.map(c=>`<option value="${c}">`).join("");
+    render();
+    document.getElementById("msg").textContent=`共查到 ${cache.length} 筆作答紀錄。`;
+  }catch(e){ document.getElementById("msg").textContent="查詢失敗："+e.message+"（檢查網路）"; }
+}
+function render(){
+  const onlyErr=document.getElementById("fErr").checked;
+  const rows=cache.filter(x=>!onlyErr || !x.success || (x.missing_count||0)>0 || (x.extra_count||0)>0);
+  const errN=cache.filter(x=>!x.success || (x.missing_count||0)>0 || (x.extra_count||0)>0).length;
+  document.getElementById("summary").textContent=`顯示 ${rows.length} 筆（其中有錯 ${errN} 筆）。紅底＝有錯，綠底＝一次就成功。`;
+  document.getElementById("rows").innerHTML = rows.length ? rows.map(x=>{
+    const bad = !x.success || (x.missing_count||0)>0 || (x.extra_count||0)>0;
+    return `<tr class="${bad?"err":"okrow"}"><td>${x.class_name||""}</td><td>${x.seat_no??""}</td><td><b>${x.name||""}</b></td>`
+      +`<td>第${x.level}關 ${x.level_name||""}</td><td>${x.attempts}</td><td>${x.hints}</td>`
+      +`<td>${x.missing_count||0}</td><td>${x.extra_count||0}</td><td>${x.seconds}</td>`
+      +`<td>${x.success?"✅":"❌"}</td><td>${fmt(x.created_at)}</td></tr>`;
+  }).join("") : `<tr><td colspan="11">沒有符合的資料</td></tr>`;
+}
+document.getElementById("qBtn").onclick=query;
+document.getElementById("fErr").onchange=render;
+document.getElementById("csvBtn").onclick=()=>{
+  const onlyErr=document.getElementById("fErr").checked;
+  const rows=cache.filter(x=>!onlyErr || !x.success || (x.missing_count||0)>0 || (x.extra_count||0)>0);
+  if(!rows.length){ alert("沒有資料可匯出"); return; }
+  const head="班級,座號,姓名,關卡,關卡名稱,嘗試次數,提示次數,缺幾格,多放幾格,秒數,成功,時間\n";
+  const lines=rows.map(x=>[x.class_name||"",x.seat_no??"",x.name||"","第"+x.level+"關",x.level_name||"",x.attempts,x.hints,x.missing_count||0,x.extra_count||0,x.seconds,x.success?"是":"否",x.created_at||""].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(","));
+  const blob=new Blob(["\ufeff"+head+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="錯題紀錄.csv"; a.click();
+};
+query();
+</script>
+</body>
+</html>

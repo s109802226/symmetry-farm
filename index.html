@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 數學遊戲樂園｜開心玩數學</title>
+<style>
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+body{
+  margin:0; font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+  background:linear-gradient(180deg,#aee7ff 0%,#d8f7ff 30%,#fff6d9 60%,#ffe9f3 100%);
+  min-height:100vh; color:#4a3728; overflow-x:hidden;
+}
+.cloud{position:fixed; font-size:54px; opacity:.9; animation:drift linear infinite; z-index:0; pointer-events:none;}
+@keyframes drift{from{transform:translateX(-15vw)}to{transform:translateX(115vw)}}
+header.hero{
+  text-align:center; padding:34px 16px 10px; position:relative; z-index:1;
+}
+.hero h1{font-size:clamp(30px,6vw,52px); margin:0; color:#e2543e;
+  text-shadow:2px 3px 0 #fff, 4px 5px 0 rgba(0,0,0,.08); letter-spacing:2px;}
+.hero p{font-size:clamp(15px,3vw,20px); font-weight:700; color:#6b4a2b; margin:8px 0 0;}
+.mascots{font-size:clamp(34px,7vw,58px); animation:bounce 2s ease-in-out infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+main{max-width:960px; margin:0 auto; padding:14px 16px 60px; position:relative; z-index:1;}
+.panel{background:#fffdf4; border:4px solid #f0a35e; border-radius:26px; padding:18px;
+  box-shadow:0 8px 0 rgba(240,163,94,.35); margin-top:16px;}
+.panel h2{margin:0 0 10px; color:#d35400; font-size:22px;}
+.qrWrap{display:flex; gap:18px; align-items:center; flex-wrap:wrap; justify-content:center;}
+#qrcode{background:white; padding:12px; border:4px dashed #f0a35e; border-radius:18px; min-width:204px; min-height:204px;
+  display:flex; align-items:center; justify-content:center;}
+#qrcode img, #qrcode canvas{display:block;}
+.qrText{font-size:15px; line-height:1.9; font-weight:700;}
+.qrText code{background:#fff; border:2px solid #f0a35e; border-radius:8px; padding:2px 8px; font-size:13px; word-break:break-all;}
+button.cute{border:3px solid #a5691f; border-radius:999px; padding:12px 26px; font-size:18px; font-weight:900;
+  background:linear-gradient(#ffd93d,#ff9d2e); cursor:pointer; box-shadow:0 4px 0 #a5691f;}
+button.cute:active{transform:translateY(3px); box-shadow:none;}
+.games{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-top:16px;}
+.card{background:white; border:4px solid #7ac74f; border-radius:24px; padding:16px; text-align:center;
+  box-shadow:0 6px 0 rgba(122,199,79,.4); display:flex; flex-direction:column; gap:8px;
+  transition:transform .15s;}
+.card:hover{transform:rotate(-1deg) scale(1.02);}
+.card.locked{border-color:#c9c9c9; box-shadow:0 6px 0 rgba(0,0,0,.1); filter:saturate(.4);}
+.card .icon{font-size:64px;}
+.card h3{margin:4px 0; font-size:20px; color:#2e7d32;}
+.card.locked h3{color:#888;}
+.card p{font-size:14px; color:#777; margin:0; line-height:1.7; flex:1;}
+.tag{display:inline-block; background:#e8f7d9; color:#2e7d32; font-weight:900; font-size:12px;
+  border-radius:999px; padding:3px 12px; margin:2px;}
+.tag.soon{background:#eee; color:#888;}
+.playBtn{display:block; text-decoration:none; background:linear-gradient(#8be060,#58a05c); color:white;
+  font-size:20px; font-weight:900; border-radius:999px; padding:12px; border:3px solid #2e7d32;
+  box-shadow:0 4px 0 #2e7d32;}
+.playBtn:active{transform:translateY(3px); box-shadow:none;}
+.steps{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
+.step{flex:1; min-width:180px; background:#eaf7ff; border:3px solid #5aa9d6; border-radius:18px; padding:12px; text-align:center; font-weight:700;}
+.step .n{font-size:30px;}
+footer{text-align:center; font-size:13px; color:#8a6d4b; padding:20px;}
+@media print{
+  .games,.steps,button.cute,footer{display:none;}
+  body{background:white;}
+  .panel{box-shadow:none;}
+}
+.wiggle{display:inline-block; animation:wig 1.6s ease-in-out infinite;}
+@keyframes wig{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+</style>
+</head>
+<body>
+<div class="cloud" style="top:40px; animation-duration:38s;">☁️</div>
+<div class="cloud" style="top:120px; animation-duration:55s; font-size:40px;">☁️</div>
+<div class="cloud" style="top:200px; animation-duration:47s; font-size:64px;">☁️</div>
+
+<header class="hero">
+  <div class="mascots">🐄🌾🚜🌷🐥</div>
+  <h1>數學遊戲樂園</h1>
+  <p>小朋友～選一個遊戲，開始挑戰吧！<span class="wiggle">🎉</span></p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>📱 上課怎麼玩？掃我！</h2>
+    <div class="qrWrap">
+      <div id="qrcode">載入 QR 中…</div>
+      <div class="qrText">
+        ① 拿平板打開相機，對著左邊 QR code 掃一下<br>
+        ② 就會來到這個樂園首頁<br>
+        ③ 點下面喜歡的遊戲卡片就可以玩囉！<br>
+        網址：<br><code id="siteUrl">https://s109802226.github.io/symmetry-farm/</code><br><br>
+        <button class="cute" onclick="window.print()">🖨️ 列印 QR code 貼在教室</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>🎮 遊戲選單</h2>
+    <div class="games">
+      <div class="card">
+        <div class="icon">🚜</div>
+        <div><span class="tag">五年級</span> <span class="tag">線對稱圖形</span></div>
+        <h3>對稱農場大作戰</h3>
+        <p>幫哞哞博士把農場蓋回線對稱！<br>有 9 關：菜苗 → 小屋 → 池塘 → 風車 → 大師農場 👑</p>
+        <a class="playBtn" href="./symmetry-farm/">▶ 開始玩！</a>
+      </div>
+      <div class="card locked">
+        <div class="icon">🔒</div>
+        <div><span class="tag soon">敬請期待</span></div>
+        <h3>新遊戲準備中…</h3>
+        <p>老師正在蓋新的遊戲田地，<br>很快就會長出來囉！🌱</p>
+      </div>
+      <div class="card locked">
+        <div class="icon">🔒</div>
+        <div><span class="tag soon">敬請期待</span></div>
+        <h3>新遊戲準備中…</h3>
+        <p>下一款會是什麼呢？<br>敬請期待！✨</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>🧭 小朋友操作三步驟</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1️⃣</div>掃 QR code<br>進入樂園</div>
+      <div class="step"><div class="n">2️⃣</div>點遊戲卡片<br>的「開始玩」</div>
+      <div class="step"><div class="n">3️⃣</div>照任務把圖形<br>蓋成線對稱 🎉</div>
+    </div>
+  </section>
+</main>
+
+<footer>👩‍🏫 老師的遊戲教室 ｜ <a href="./teacher/">教師後台（錯題紀錄）</a> ｜ 有問題請找老師 ｜ QR code 連到本站首頁，换網址記得重印喔！</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  var url = "https://s109802226.github.io/symmetry-farm/";
+  document.getElementById("siteUrl").textContent = url;
+  function fallback(msg){
+    document.getElementById("qrcode").innerHTML =
+      '<div style="font-size:14px;font-weight:900;text-align:center;">' + msg +
+      '<br><a href="'+url+'">點我開啟首頁</a></div>';
+  }
+  if (typeof QRCode === "undefined") { fallback("QR 套件載入失敗<br>（請確認網路連線）"); return; }
+  try{
+    new QRCode(document.getElementById("qrcode"), {
+      text: url, width: 180, height: 180,
+      colorDark : "#4a3728", colorLight : "#ffffff",
+      correctLevel : QRCode.CorrectLevel.M
+    });
+  }catch(e){ fallback("QR 產生失敗，請直接輸入網址"); }
+})();
+</script>
+</body>
+</html>
